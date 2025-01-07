@@ -1,6 +1,7 @@
 <div class="side-bar">
             <div class="side_header">
-                <h1>user@gmail.com</h1>
+                <img src="public/image/sale_logo.png" alt="">
+                <h1>Salesync</h1>
             </div>
             <ul class="nav_menu">
                 <li class="nav_links">

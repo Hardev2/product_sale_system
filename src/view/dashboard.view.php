@@ -83,6 +83,10 @@ $overall_income = mysqli_fetch_assoc($overall_income_query)['total_income'];
             <div class="content">
             <h1><?php echo isset($title) ? $title : 'Default Title'; ?></h1>
                     <div class="summary_sales">
+                    <div class="sale_card total_products">
+                            <h3><i class="fa-solid fa-box"></i><?php echo $total_products; ?></h3>
+                            <p>Total Products</p>
+                        </div>
                         <div class="sale_card income_day">
                             <h3>₱<?php echo number_format($today_income['total_income'], 2); ?></h3>
                             <p>Total Income Today</p>
@@ -90,10 +94,6 @@ $overall_income = mysqli_fetch_assoc($overall_income_query)['total_income'];
                         <div class="sale_card income_month">
                             <h3>₱<?php echo number_format($monthly_income['total_income'], 2); ?></h3>
                             <p>Total Income This Month</p>
-                        </div>
-                        <div class="sale_card total_products">
-                            <h3><i class="fa-solid fa-box"></i><?php echo $total_products; ?></h3>
-                            <p>Total Products</p>
                         </div>
                         <div class="sale_card overall_income">
                             <h3>₱<?php echo number_format($overall_income, 2); ?></h3>

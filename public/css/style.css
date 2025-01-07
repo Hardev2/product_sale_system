@@ -38,10 +38,16 @@ h3 {
   justify-content: center;
   padding: 20px 10px;
   border-bottom: 1px solid grey;
+  gap: 5px;
+}
+
+.side-bar .side_header img {
+  width: 30px;
+  height: 30px;
 }
 
 .side-bar .side_header h1 {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
 }
 
 .side-bar .nav_menu {
@@ -154,6 +160,7 @@ h3 {
   gap: 20px;
   position: relative;
   top: 50px;
+  flex-wrap: wrap;
 }
 
 .graph_wrapper .day_chart,
