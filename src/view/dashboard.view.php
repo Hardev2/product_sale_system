@@ -83,7 +83,7 @@ $overall_income = mysqli_fetch_assoc($overall_income_query)['total_income'];
             <div class="content">
             <h1><?php echo isset($title) ? $title : 'Default Title'; ?></h1>
                     <div class="summary_sales">
-                    <div class="sale_card total_products">
+                        <div class="sale_card total_products">
                             <h3><i class="fa-solid fa-box"></i><?php echo $total_products; ?></h3>
                             <p>Total Products</p>
                         </div>
