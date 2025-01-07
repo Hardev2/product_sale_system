@@ -1,0 +1,35 @@
+.btn-edit,
+.btn-delete,
+.btn-view {
+  display: inline-block;
+  width: 75px;
+  padding: 5px;
+  border-radius: 3px;
+  color: white;
+  text-decoration: none;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.btn-edit i,
+.btn-delete i,
+.btn-view i {
+  margin-right: 3px;
+}
+.btn-edit,
+.btn-view {
+  background-color: #1c6dd0;
+}
+
+.btn-delete {
+  background-color: #ff5959;
+}
+
+.btn-edit:hover,
+.btn-view:hover {
+  background-color: #2d46b9;
+}
+
+.btn-delete:hover {
+  background-color: #d71313;
+}

@@ -1,0 +1,194 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f8fafc;
+  font-family: "Roboto", sans-serif;
+}
+h2 {
+  color: rgb(65, 64, 64);
+}
+
+h3 {
+  color: rgb(65, 64, 64);
+}
+
+.container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+}
+
+.container .side-bar {
+  background-color: white;
+  position: fixed;
+  width: 15%;
+  height: 100vh;
+  padding: 20px;
+}
+
+.side-bar .side_header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 10px;
+  border-bottom: 1px solid grey;
+}
+
+.side-bar .side_header h1 {
+  font-size: 1.2rem;
+}
+
+.side-bar .nav_menu {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  list-style: none;
+  position: relative;
+  top: 50px;
+}
+
+.nav_menu .nav_links a {
+  text-decoration: none;
+  color: rgb(65, 64, 64);
+  padding: 7px 5px;
+  border-radius: 3px;
+  display: block;
+  width: 170px;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.nav_menu .nav_links a i {
+  margin-right: 3px;
+}
+
+.nav_menu .nav_links a:hover {
+  background-color: black;
+  color: white;
+  letter-spacing: 2px;
+}
+
+.container .hero {
+  background-color: white;
+  height: 100vh;
+  width: 85%;
+  margin-left: 210px;
+  padding: 20px;
+}
+
+.hero .content {
+  width: 100%;
+  height: 95vh;
+}
+.hero .content h1 {
+  color: rgb(53, 52, 52);
+  text-transform: uppercase;
+  font-size: 1.3rem;
+  margin-bottom: 50px;
+  margin-top: 25px;
+}
+
+.content .summary_sales {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 20px;
+  flex-wrap: wrap;
+}
+
+.summary_sales .sale_card {
+  flex: 1 0 250px;
+  height: 90px;
+  padding: 20px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.summary_sales .sale_card h3 {
+  color: white;
+}
+
+.summary_sales .income_day {
+  background-color: #e74c3c;
+}
+
+.summary_sales .income_month {
+  background-color: #34495e;
+}
+
+.summary_sales .total_products {
+  background-color: #9b59b6;
+}
+
+.summary_sales .overall_income {
+  background-color: #3498db;
+}
+
+.summary_sales .income_day,
+.summary_sales .income_month,
+.summary_sales .total_products,
+.summary_sales .overall_income {
+  color: white;
+}
+.summary_sales .income_day h3,
+.summary_sales .income_month h3,
+.summary_sales .total_products h3,
+.summary_sales .overall_income h3 {
+  margin-bottom: 10px;
+}
+.summary_sales .total_products h3 i {
+  margin-right: 3px;
+}
+
+.content .graph_wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+  top: 50px;
+}
+
+.graph_wrapper .day_chart,
+.graph_wrapper .month_chart {
+  width: 530px;
+}
+
+.tally_container {
+  margin-top: 50px;
+}
+
+.tally_container {
+  ul {
+    list-style: none;
+    margin: 20px;
+    text-align: left;
+  }
+  li {
+    display: flex;
+    justify-content: space-around;
+    background: #f8fafc;
+    border: 1px solid #e0e0e0;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 3px;
+    cursor: pointer;
+  }
+
+  li:hover {
+    background-color: #f0f8ff;
+  }
+  li span {
+    width: 100px;
+  }
+  h3 span {
+    color: #1c6dd0;
+  }
+}
