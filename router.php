@@ -9,6 +9,9 @@ $pages = [
     'history' => ['file' => 'history.php', 'title' => 'History'],
     'detail' => ['file' => 'daily_sales_detail.php', 'title' => 'Daily Sales Details'],
     'inventory' => ['file' => 'inventory.php', 'title' => 'Inventory'],
+    'creditor' => ['file' => 'creditor.php', 'title' => 'Creditor Management'],
+    'creditor_list' => ['file' => 'creditor_list.php', 'title' => 'Creditor List'],
+    'creditor_details' => ['file' => 'creditor_details.php', 'title' => 'Creditor Details'],
     'db' => ['file' => 'src/config/database.php'],
    
 

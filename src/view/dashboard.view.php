@@ -3,31 +3,31 @@
 date_default_timezone_set('Asia/Manila');
 include 'src/config/database.php'; // Include your database connection file
 
-// Get the total income for today
+// Get the total income for today, including the credited price with cents
 $today = date('Y-m-d');
 $today_income_query = mysqli_query($conn, "
-    SELECT SUM(s.quantity * p.price) AS total_income 
+    SELECT SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
     FROM sales s
     JOIN products p ON s.product_id = p.id
     WHERE s.sale_date = '$today'
 ");
 $today_income = mysqli_fetch_assoc($today_income_query);
 
-// Get the total income for the current month
+// Get the total income for the current month, including the credited price with cents
 $current_month = date('Y-m');
 $monthly_income_query = mysqli_query($conn, "
-    SELECT SUM(s.quantity * p.price) AS total_income 
+    SELECT SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
     FROM sales s
     JOIN products p ON s.product_id = p.id
     WHERE s.sale_date LIKE '$current_month%'
 ");
 $monthly_income = mysqli_fetch_assoc($monthly_income_query);
 
-// Get the total income summary for each day in the current month
+// Get the total income summary for each day in the current month, including the credited price with cents
 $daily_income_summary = mysqli_query($conn, "
     SELECT 
         s.sale_date, 
-        SUM(s.quantity * p.price) AS total_income 
+        SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
     FROM sales s
     JOIN products p ON s.product_id = p.id
     WHERE s.sale_date LIKE '$current_month%'
@@ -35,11 +35,11 @@ $daily_income_summary = mysqli_query($conn, "
     ORDER BY s.sale_date DESC
 ");
 
-// Get the total income summary for the last 30 days
+// Get the total income summary for the last 30 days, including the credited price with cents
 $last_30_days = mysqli_query($conn, "
     SELECT 
         s.sale_date, 
-        SUM(s.quantity * p.price) AS total_income 
+        SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
     FROM sales s
     JOIN products p ON s.product_id = p.id
     WHERE s.sale_date >= CURDATE() - INTERVAL 30 DAY
@@ -67,11 +67,12 @@ $total_products = mysqli_fetch_assoc($total_products_query)['total_products'];
 
 
 $overall_income_query = mysqli_query($conn, "
-    SELECT SUM(s.quantity * p.price) AS total_income 
+    SELECT SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
     FROM sales s
     JOIN products p ON s.product_id = p.id
 ");
 $overall_income = mysqli_fetch_assoc($overall_income_query)['total_income'];
+
 ?>
 
 <?php include 'public/components/header.php' ?>

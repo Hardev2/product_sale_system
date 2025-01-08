@@ -1,12 +1,12 @@
 <?php
 include 'src/config/database.php'; // Include your database connection file
 
-// Fetch total daily sales and income
+// Fetch total daily sales and income, including the credited price (with cents)
 $daily_income_summary = mysqli_query($conn, "
     SELECT 
         s.sale_date, 
         SUM(s.quantity) AS total_quantity_sold, 
-        SUM(s.quantity * p.price) AS total_income 
+        SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding the credited price with cents to the total income calculation
     FROM 
         sales s
     JOIN 
@@ -21,10 +21,10 @@ $daily_income_summary = mysqli_query($conn, "
 <?php include 'public/components/header.php' ?>
 <body>
     <div class="container">
-    <?php include 'public/components/side-bar.php' ?>
-       <div class="hero">
+        <?php include 'public/components/side-bar.php' ?>
+        <div class="hero">
             <div class="content">
-            <h1><?php echo isset($title) ? $title : 'Default Title'; ?></h1>
+                <h1><?php echo isset($title) ? $title : 'Default Title'; ?></h1>
                 <?php if (mysqli_num_rows($daily_income_summary) > 0): ?>
                     <table id="myTable">
                         <thead>
@@ -52,15 +52,15 @@ $daily_income_summary = mysqli_query($conn, "
                     <p class="no-records">No daily income summary available.</p>
                 <?php endif; ?>
             </div>
-       </div>
+        </div>
     </div>
 
-             <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-             <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
-                <script>
-                $(document).ready( function () {
-                    $('#myTable').DataTable();
-                });
-                </script>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script>
+    $(document).ready( function () {
+        $('#myTable').DataTable();
+    });
+    </script>
 </body>
 </html>

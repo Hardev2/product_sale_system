@@ -59,13 +59,63 @@ h3 {
   top: 50px;
 }
 
+.nav_menu .nav_links {
+  position: relative;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: #ffffff;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-menu li {
+  padding: 10px 20px;
+}
+
+.dropdown-menu li a {
+  text-decoration: none;
+  color: #333;
+  display: block;
+}
+
+/* Show dropdown when open */
+.dropdown.open .dropdown-menu {
+  display: block;
+}
+
+.nav_links .dropdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 20px; /* Add space for the arrow */
+}
+
+/* Add an arrow indicator to the dropdown toggle */
+.nav_links .dropdown-toggle::after {
+  content: "\25BC"; /* Downward arrow */
+  margin-left: 8px; /* Space between text and arrow */
+  transition: transform 0.3s ease;
+}
+
+/* Rotate the arrow when the dropdown is open */
+.nav_links.open .dropdown-toggle::after {
+  transform: rotate(180deg); /* Rotate the arrow */
+}
+
 .nav_menu .nav_links a {
   text-decoration: none;
   color: rgb(65, 64, 64);
   padding: 7px 5px;
   border-radius: 3px;
   display: block;
-  width: 170px;
+  width: 160px;
   transition: 0.3s;
   cursor: pointer;
 }
@@ -79,6 +129,12 @@ h3 {
   color: white;
   letter-spacing: 2px;
   margin-left: 10px;
+}
+
+.nav_menu .nav_links a.active {
+  background-color: black; /* Same as hover */
+  color: white;
+  letter-spacing: 2px;
 }
 
 .container .hero {

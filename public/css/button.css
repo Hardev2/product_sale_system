@@ -1,6 +1,7 @@
 .btn-edit,
 .btn-delete,
-.btn-view {
+.btn-view,
+.btn-paid {
   display: inline-block;
   width: 75px;
   padding: 5px;
@@ -9,6 +10,28 @@
   text-decoration: none;
   transition: 0.3s;
   cursor: pointer;
+}
+
+.back-btn {
+  display: block;
+  width: 190px;
+  text-align: center;
+  padding: 7px;
+  margin-top: 20px;
+}
+
+.btn-paid {
+  outline: none;
+  border: none;
+  background-color: #65b741;
+  width: 130px;
+  padding: 9px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-paid:hover {
+  background-color: #416d19;
 }
 
 .btn-edit i,
