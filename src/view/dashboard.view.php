@@ -15,12 +15,18 @@ $today_income = mysqli_fetch_assoc($today_income_query);
 
 // Get the total income for the current month, including the credited price with cents
 $current_month = date('Y-m');
+// Get total income for each month, including the credited price with cents (Last 6 months)
 $monthly_income_query = mysqli_query($conn, "
-    SELECT SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
+    SELECT 
+        DATE_FORMAT(s.sale_date, '%Y-%m') AS month,
+        SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
     FROM sales s
     JOIN products p ON s.product_id = p.id
-    WHERE s.sale_date LIKE '$current_month%'
+    WHERE s.sale_date >= CURDATE() - INTERVAL 6 MONTH
+    GROUP BY month
+    ORDER BY month DESC
 ");
+
 $monthly_income = mysqli_fetch_assoc($monthly_income_query);
 
 // Get the total income summary for each day in the current month, including the credited price with cents
@@ -60,7 +66,8 @@ $monthly_data = [];
 while ($row = mysqli_fetch_assoc($last_30_days)) {
     $monthly_labels[] = $row['sale_date'];
     $monthly_data[] = $row['total_income'];
-}
+}// Prepare data for the monthly graph
+
 
 $total_products_query = mysqli_query($conn, "SELECT COUNT(*) AS total_products FROM products");
 $total_products = mysqli_fetch_assoc($total_products_query)['total_products'];
@@ -150,39 +157,40 @@ $overall_income = mysqli_fetch_assoc($overall_income_query)['total_income'];
             }
         });
 
-        // Monthly Income Chart
-        const monthlyIncomeCtx = document.getElementById('monthlyIncomeChart').getContext('2d');
-        const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
-            type: 'line',
-            data: {
-                labels: <?php echo json_encode(array_reverse($monthly_labels)); ?>,
-                datasets: [{
-                    label: 'Monthly Income',
-                    data: <?php echo json_encode(array_reverse($monthly_data)); ?>,
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                    fill: true,
-                    tension: 0.4
-                }]
+   // Monthly Income Chart (updated)
+const monthlyIncomeCtx = document.getElementById('monthlyIncomeChart').getContext('2d');
+const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
+    type: 'line',
+    data: {
+        labels: <?php echo json_encode(array_reverse($monthly_labels)); ?>, // Month labels
+        datasets: [{
+            label: 'Monthly Income Growth',
+            data: <?php echo json_encode(array_reverse($monthly_data)); ?>, // Monthly income data
+            borderColor: 'rgba(153, 102, 255, 1)', // Color for the line
+            backgroundColor: 'rgba(153, 102, 255, 0.2)', // Background color for the area under the curve
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Month'
+                }
             },
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Date'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Total Income (₱)'
-                        }
-                    }
+            y: {
+                title: {
+                    display: true,
+                    text: 'Total Income (₱)'
                 }
             }
-        });
+        }
+    }
+});
+
     </script>
 </body>
 </html>
