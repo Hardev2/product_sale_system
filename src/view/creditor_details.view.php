@@ -22,7 +22,7 @@ $products_query = $conn->prepare("
            ((p.price + 0.25) * cp.quantity) AS total_price
     FROM creditor_products cp
     JOIN products p ON cp.product_id = p.id
-    WHERE cp.creditor_id = ?
+    WHERE cp.creditor_id = ? AND cp.status = 'unpaid'
     ORDER BY cp.credit_date DESC
 ");
 $products_query->bind_param("i", $creditor_id);
@@ -43,19 +43,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_paid'])) {
     try {
         // Insert each credited product into the sales table
         $sales_query = $conn->prepare("
-            INSERT INTO sales (product_id, quantity, sale_date) 
-            VALUES (?, ?, NOW())
+            INSERT INTO sales (product_id, quantity, credited_price, sale_date) 
+            VALUES (?, ?, ?, NOW())
+        ");
+
+        // Update the status in creditor_products
+        $update_status_query = $conn->prepare("
+            UPDATE creditor_products SET status = 'paid'
+            WHERE creditor_id = ? AND product_id = ?
         ");
 
         foreach ($product_rows as $row) {
-            $sales_query->bind_param("ii", $row['product_id'], $row['quantity']);
+            $sales_query->bind_param("iid", $row['product_id'], $row['quantity'], $row['credited_price']);
             $sales_query->execute();
-        }
 
-        // Delete credited products for this creditor
-        $delete_query = $conn->prepare("DELETE FROM creditor_products WHERE creditor_id = ?");
-        $delete_query->bind_param("i", $creditor_id);
-        $delete_query->execute();
+            $update_status_query->bind_param("ii", $creditor_id, $row['product_id']);
+            $update_status_query->execute();
+        }
 
         // Commit transaction
         $conn->commit();
@@ -68,6 +72,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_paid'])) {
         die("Error processing payment: " . $e->getMessage());
     }
 }
+
+$creditor_products_query = "
+    SELECT c.name AS creditor_name, p.name AS product_name,cp.status, cp.quantity, (p.price + 0.25) AS credited_price, cp.credit_date
+    FROM creditor_products cp
+    JOIN creditors c ON cp.creditor_id = c.id
+    JOIN products p ON cp.product_id = p.id
+       WHERE cp.creditor_id = '$creditor_id' AND cp.status = 'paid'
+    ORDER BY c.name, cp.credit_date DESC;
+
+";
+
+$creditor_products = mysqli_query($conn, $creditor_products_query);
 ?>
 <?php include 'public/components/header.php' ?>
 <body>
@@ -75,55 +91,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_paid'])) {
    <?php include 'public/components/side-bar.php' ?>
     <div class="hero">
         <div class="content">
-                    <h1>Credited Products for <?php echo htmlspecialchars($creditor['name']); ?></h1>
-                <?php if (isset($_GET['status']) && $_GET['status'] === 'paid'): ?>
-                    <p style="color: green;">Payment successfully recorded!</p>
+            <h1>Credited Products for <?php echo htmlspecialchars($creditor['name']); ?></h1>
+            <?php if (isset($_GET['status']) && $_GET['status'] === 'paid'): ?>
+                <p style="color: green;">Payment successfully recorded!</p>
+            <?php endif; ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Credited Price</th>
+                        <th>Total Price</th>
+                        <th>Credit Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($product_rows)): ?>
+                        <?php foreach ($product_rows as $row): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                                <td><?php echo $row['quantity']; ?></td>
+                                <td>₱<?php echo number_format($row['credited_price'], 2); ?></td>
+                                <td>₱<?php echo number_format($row['total_price'], 2); ?></td>
+                                <td><?php echo (new DateTime($row['credit_date']))->format('F j, Y'); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5">No products credited to this creditor.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+                <?php if (!empty($product_rows)): ?>
+                    <tfoot>
+                        <tr>
+                            <td colspan="1" style="text-align: right;"><strong>Total Credits:</strong></td>
+                            <td colspan="4"><strong>₱<?php echo number_format($total_credits, 2); ?></strong></td>
+                        </tr>
+                    </tfoot>
                 <?php endif; ?>
-                <table>
+            </table>
+            <?php if (!empty($product_rows)): ?>
+                <form method="POST" style="margin-top: 20px;">
+                    <button type="submit" name="mark_paid" class="btn-paid"><i class="fa-solid fa-thumbs-up"></i> Mark as Paid</button>
+                </form>
+            <?php endif; ?>
+            <div class="action-btn">
+                <a href="router.php?page=creditor_list" class="btn-view back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Creditors List</a>
+            </div>
+            <h3 style="margin-top:20px">Credits History of <?=$creditor['name']?></h3>
+            <table id="myTable">
                     <thead>
                         <tr>
+                            <th>Creditor Name</th>
                             <th>Product Name</th>
                             <th>Quantity</th>
                             <th>Credited Price</th>
-                            <th>Total Price</th>
+                            <th>Status</th>
                             <th>Credit Date</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (!empty($product_rows)): ?>
-                            <?php foreach ($product_rows as $row): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                                    <td><?php echo $row['quantity']; ?></td>
-                                    <td>₱<?php echo number_format($row['credited_price'], 2); ?></td>
-                                    <td>₱<?php echo number_format($row['total_price'], 2); ?></td>
-                                    <td><?php echo (new DateTime($row['credit_date']))->format('F j, Y'); ?></td>
+                        <?php while ($row = mysqli_fetch_assoc($creditor_products)): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['creditor_name']); ?></td>
+                                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                                <td><?php echo $row['quantity']; ?></td>
+                                <td>₱<?php echo number_format($row['credited_price'], 2); ?></td>
+                                <td><?php echo $row['status']; ?></td>
+                                <td><?php echo (new DateTime($row['credit_date']))->format('F j, Y'); ?></td>
 
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="5">No products credited to this creditor.</td>
                             </tr>
-                        <?php endif; ?>
+                        <?php endwhile; ?>
                     </tbody>
-                    <?php if (!empty($product_rows)): ?>
-                        <tfoot>
-                            <tr>
-                                <td colspan="1" style="text-align: right;"><strong>Total Credits:</strong></td>
-                                <td colspan="4"><strong>₱<?php echo number_format($total_credits, 2); ?></strong></td>
-                            </tr>
-                        </tfoot>
-                    <?php endif; ?>
                 </table>
-                <?php if (!empty($product_rows)): ?>
-                    <form method="POST" style="margin-top: 20px;">
-                        <button type="submit" name="mark_paid" class="btn-paid"><i class="fa-solid fa-thumbs-up"></i> Mark as Paid</button>
-                    </form>
-                <?php endif; ?>
-                <div class="action-btn">
-                <a href="router.php?page=creditor_list" class="btn-view back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Creditors List</a>
-                </div>
         </div>
     </div>
    </div>

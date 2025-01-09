@@ -44,11 +44,13 @@ $products = mysqli_query($conn, "SELECT id, name, price, quantity FROM products 
 
 
 $creditor_products_query = "
-    SELECT c.name AS creditor_name, p.name AS product_name, cp.quantity, (p.price + 0.25) AS credited_price, cp.credit_date
+    SELECT c.name AS creditor_name, p.name AS product_name,cp.status, cp.quantity, (p.price + 0.25) AS credited_price, cp.credit_date
     FROM creditor_products cp
     JOIN creditors c ON cp.creditor_id = c.id
     JOIN products p ON cp.product_id = p.id
-    ORDER BY c.name, cp.credit_date DESC
+       WHERE cp.status = 'unpaid'
+    ORDER BY c.name, cp.credit_date DESC;
+
 ";
 
 $creditor_products = mysqli_query($conn, $creditor_products_query);
@@ -115,6 +117,7 @@ $creditor_products = mysqli_query($conn, $creditor_products_query);
                             <th>Product Name</th>
                             <th>Quantity</th>
                             <th>Credited Price</th>
+                            <th>Status</th>
                             <th>Credit Date</th>
                         </tr>
                     </thead>
@@ -125,6 +128,7 @@ $creditor_products = mysqli_query($conn, $creditor_products_query);
                                 <td><?php echo htmlspecialchars($row['product_name']); ?></td>
                                 <td><?php echo $row['quantity']; ?></td>
                                 <td>₱<?php echo number_format($row['credited_price'], 2); ?></td>
+                                <td><?php echo $row['status']; ?></td>
                                 <td><?php echo (new DateTime($row['credit_date']))->format('F j, Y'); ?></td>
 
                             </tr>

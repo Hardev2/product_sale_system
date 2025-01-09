@@ -3,54 +3,74 @@
 date_default_timezone_set('Asia/Manila');
 include 'src/config/database.php'; // Include your database connection file
 
-// Get the total income for today, including the credited price with cents
+// Get the total income for today
 $today = date('Y-m-d');
 $today_income_query = mysqli_query($conn, "
-    SELECT SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
-    FROM sales s
-    JOIN products p ON s.product_id = p.id
-    WHERE s.sale_date = '$today'
+    SELECT 
+        SUM(s.quantity * (p.price + CASE WHEN cp.product_id IS NOT NULL THEN 0.25 ELSE 0 END)) AS total_income
+    FROM 
+        sales s
+    JOIN 
+        products p ON s.product_id = p.id
+    LEFT JOIN 
+        creditor_products cp ON s.product_id = cp.product_id
+    WHERE 
+        s.sale_date = '$today'
 ");
-$today_income = mysqli_fetch_assoc($today_income_query);
+$today_income = mysqli_fetch_assoc($today_income_query)['total_income'];
 
-// Get the total income for the current month, including the credited price with cents
+// Get the total income for the current month
 $current_month = date('Y-m');
-// Get total income for each month, including the credited price with cents (Last 6 months)
 $monthly_income_query = mysqli_query($conn, "
     SELECT 
-        DATE_FORMAT(s.sale_date, '%Y-%m') AS month,
-        SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
-    FROM sales s
-    JOIN products p ON s.product_id = p.id
-    WHERE s.sale_date >= CURDATE() - INTERVAL 6 MONTH
-    GROUP BY month
-    ORDER BY month DESC
+        SUM(s.quantity * (p.price + CASE WHEN cp.product_id IS NOT NULL THEN 0.25 ELSE 0 END)) AS total_income
+    FROM 
+        sales s
+    JOIN 
+        products p ON s.product_id = p.id
+    LEFT JOIN 
+        creditor_products cp ON s.product_id = cp.product_id
+    WHERE 
+        s.sale_date LIKE '$current_month%'
 ");
+$monthly_income = mysqli_fetch_assoc($monthly_income_query)['total_income'];
 
-$monthly_income = mysqli_fetch_assoc($monthly_income_query);
-
-// Get the total income summary for each day in the current month, including the credited price with cents
+// Get the total income summary for each day in the current month
 $daily_income_summary = mysqli_query($conn, "
     SELECT 
         s.sale_date, 
-        SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
-    FROM sales s
-    JOIN products p ON s.product_id = p.id
-    WHERE s.sale_date LIKE '$current_month%'
-    GROUP BY s.sale_date
-    ORDER BY s.sale_date DESC
+        SUM(s.quantity * (p.price + CASE WHEN cp.product_id IS NOT NULL THEN 0.25 ELSE 0 END)) AS total_income
+    FROM 
+        sales s
+    JOIN 
+        products p ON s.product_id = p.id
+    LEFT JOIN 
+        creditor_products cp ON s.product_id = cp.product_id
+    WHERE 
+        s.sale_date LIKE '$current_month%'
+    GROUP BY 
+        s.sale_date
+    ORDER BY 
+        s.sale_date DESC
 ");
 
-// Get the total income summary for the last 30 days, including the credited price with cents
+// Get the total income summary for the last 30 days
 $last_30_days = mysqli_query($conn, "
     SELECT 
         s.sale_date, 
-        SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
-    FROM sales s
-    JOIN products p ON s.product_id = p.id
-    WHERE s.sale_date >= CURDATE() - INTERVAL 30 DAY
-    GROUP BY s.sale_date
-    ORDER BY s.sale_date DESC
+        SUM(s.quantity * (p.price + CASE WHEN cp.product_id IS NOT NULL THEN 0.25 ELSE 0 END)) AS total_income
+    FROM 
+        sales s
+    JOIN 
+        products p ON s.product_id = p.id
+    LEFT JOIN 
+        creditor_products cp ON s.product_id = cp.product_id
+    WHERE 
+        s.sale_date >= CURDATE() - INTERVAL 30 DAY
+    GROUP BY 
+        s.sale_date
+    ORDER BY 
+        s.sale_date DESC
 ");
 
 // Prepare data for graphs
@@ -66,19 +86,28 @@ $monthly_data = [];
 while ($row = mysqli_fetch_assoc($last_30_days)) {
     $monthly_labels[] = $row['sale_date'];
     $monthly_data[] = $row['total_income'];
-}// Prepare data for the monthly graph
+}
 
-
+// Get the total number of products
 $total_products_query = mysqli_query($conn, "SELECT COUNT(*) AS total_products FROM products");
 $total_products = mysqli_fetch_assoc($total_products_query)['total_products'];
 
-
+// Get the overall income
 $overall_income_query = mysqli_query($conn, "
-    SELECT SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding 0.25 to the price
-    FROM sales s
-    JOIN products p ON s.product_id = p.id
+    SELECT 
+        SUM(s.quantity * (p.price + CASE WHEN cp.product_id IS NOT NULL THEN 0.25 ELSE 0 END)) AS total_income
+    FROM 
+        sales s
+    JOIN 
+        products p ON s.product_id = p.id
+    LEFT JOIN 
+        creditor_products cp ON s.product_id = cp.product_id
 ");
 $overall_income = mysqli_fetch_assoc($overall_income_query)['total_income'];
+
+// Get total products count
+$total_products_query = mysqli_query($conn, "SELECT COUNT(*) AS total_products FROM products");
+$total_products = mysqli_fetch_assoc($total_products_query)['total_products'] ?? 0;
 
 ?>
 
@@ -89,35 +118,35 @@ $overall_income = mysqli_fetch_assoc($overall_income_query)['total_income'];
         <?php include 'public/components/side-bar.php' ?>
         <div class="hero">
             <div class="content">
-            <h1><?php echo isset($title) ? $title : 'Default Title'; ?></h1>
-                    <div class="summary_sales">
-                        <div class="sale_card total_products">
-                            <h3><i class="fa-solid fa-box"></i><?php echo $total_products; ?></h3>
-                            <p>Total Products</p>
-                        </div>
-                        <div class="sale_card income_day">
-                            <h3>₱<?php echo number_format($today_income['total_income'], 2); ?></h3>
-                            <p>Total Income Today</p>
-                        </div>
-                        <div class="sale_card income_month">
-                            <h3>₱<?php echo number_format($monthly_income['total_income'], 2); ?></h3>
-                            <p>Total Income This Month</p>
-                        </div>
-                        <div class="sale_card overall_income">
-                            <h3>₱<?php echo number_format($overall_income, 2); ?></h3>
-                            <p>Overall Total Income</p>
-                        </div>
+                <h1><?php echo isset($title) ? $title : 'Default Title'; ?></h1>
+                <div class="summary_sales">
+                    <div class="sale_card total_products">
+                        <h3><i class="fa-solid fa-box"></i><?php echo $total_products; ?></h3>
+                        <p>Total Products</p>
                     </div>
-                    <div class="graph_wrapper">
-                        <div class="day_chart">
-                            <h2>Daily Income Growth</h2>
-                            <canvas id="dailyIncomeChart" ></canvas>
-                        </div>
-                        <div class="month_chart">
-                            <h2>Monthly Income Growth</h2>
-                            <canvas id="monthlyIncomeChart"></canvas>
-                        </div>
+                    <div class="sale_card income_day">
+                        <h3>₱<?php echo number_format($today_income, 2); ?></h3>
+                        <p>Total Income Today</p>
                     </div>
+                    <div class="sale_card income_month">
+                        <h3>₱<?php echo number_format($monthly_income, 2); ?></h3>
+                        <p>Total Income This Month</p>
+                    </div>
+                    <div class="sale_card overall_income">
+                        <h3>₱<?php echo number_format($overall_income, 2); ?></h3>
+                        <p>Overall Total Income</p>
+                    </div>
+                </div>
+                <div class="graph_wrapper">
+                    <div class="day_chart">
+                        <h2>Daily Income Growth</h2>
+                        <canvas id="dailyIncomeChart"></canvas>
+                    </div>
+                    <div class="month_chart">
+                        <h2>Monthly Income Growth</h2>
+                        <canvas id="monthlyIncomeChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -157,40 +186,39 @@ $overall_income = mysqli_fetch_assoc($overall_income_query)['total_income'];
             }
         });
 
-   // Monthly Income Chart (updated)
-const monthlyIncomeCtx = document.getElementById('monthlyIncomeChart').getContext('2d');
-const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
-    type: 'line',
-    data: {
-        labels: <?php echo json_encode(array_reverse($monthly_labels)); ?>, // Month labels
-        datasets: [{
-            label: 'Monthly Income Growth',
-            data: <?php echo json_encode(array_reverse($monthly_data)); ?>, // Monthly income data
-            borderColor: 'rgba(153, 102, 255, 1)', // Color for the line
-            backgroundColor: 'rgba(153, 102, 255, 0.2)', // Background color for the area under the curve
-            fill: true,
-            tension: 0.4
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            x: {
-                title: {
-                    display: true,
-                    text: 'Month'
-                }
+        // Monthly Income Chart
+        const monthlyIncomeCtx = document.getElementById('monthlyIncomeChart').getContext('2d');
+        const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
+            type: 'line',
+            data: {
+                labels: <?php echo json_encode(array_reverse($monthly_labels)); ?>,
+                datasets: [{
+                    label: 'Monthly Income Growth',
+                    data: <?php echo json_encode(array_reverse($monthly_data)); ?>,
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                }]
             },
-            y: {
-                title: {
-                    display: true,
-                    text: 'Total Income (₱)'
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Total Income (₱)'
+                        }
+                    }
                 }
             }
-        }
-    }
-});
-
+        });
     </script>
 </body>
 </html>

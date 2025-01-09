@@ -8,21 +8,31 @@ if (!$sale_date) {
     die("No date provided.");
 }
 
-// Fetch detailed sales data for the selected date, including cents in the price
+// Fetch detailed sales data for the selected date
 $sales_details = mysqli_query($conn, "
-    SELECT 
-        p.name AS product_name, 
-        (p.price + 0.25) AS credited_price,   -- Adding the cent part to the product price
-        s.quantity, 
-        (s.quantity * (p.price + 0.25)) AS total_income  -- Total income should consider the credited price
-    FROM 
-        sales s
-    JOIN 
-        products p ON s.product_id = p.id
-    WHERE 
-        s.sale_date = '$sale_date'
-    ORDER BY 
-        p.name ASC
+ SELECT 
+    p.name AS product_name, 
+    (p.price + CASE 
+        WHEN cp.product_id IS NOT NULL THEN 0.25 -- Apply the 0.25 only if it's in the creditor_products table
+        ELSE 0 
+    END) AS credited_price, -- Add 0.25 only for creditor products
+    s.quantity, 
+    (s.quantity * (p.price + CASE 
+        WHEN cp.product_id IS NOT NULL THEN 0.25 -- Apply the 0.25 only if it's in the creditor_products table
+        ELSE 0 
+    END)) AS total_income -- Calculate total income accordingly
+FROM 
+    sales s
+JOIN 
+    products p ON s.product_id = p.id
+LEFT JOIN 
+    creditor_products cp ON s.product_id = cp.product_id -- Check if the product exists in creditor_products
+WHERE 
+    s.sale_date = '$sale_date'
+ORDER BY 
+    p.name ASC;
+
+
 ");
 
 // Initialize a variable to store the total income

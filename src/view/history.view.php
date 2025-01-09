@@ -3,18 +3,24 @@ include 'src/config/database.php'; // Include your database connection file
 
 // Fetch total daily sales and income, including the credited price (with cents)
 $daily_income_summary = mysqli_query($conn, "
-    SELECT 
-        s.sale_date, 
-        SUM(s.quantity) AS total_quantity_sold, 
-        SUM(s.quantity * (p.price + 0.25)) AS total_income  -- Adding the credited price with cents to the total income calculation
-    FROM 
-        sales s
-    JOIN 
-        products p ON s.product_id = p.id
-    GROUP BY 
-        s.sale_date
-    ORDER BY 
-        s.sale_date DESC
+SELECT 
+    s.sale_date, 
+    SUM(s.quantity) AS total_quantity_sold, 
+    SUM(s.quantity * (p.price + CASE 
+        WHEN cp.product_id IS NOT NULL THEN 0.25  -- Add 0.25 only for creditor products
+        ELSE 0 
+    END)) AS total_income  -- Calculate total income with the correct credited price adjustment
+FROM 
+    sales s
+JOIN 
+    products p ON s.product_id = p.id
+LEFT JOIN 
+    creditor_products cp ON s.product_id = cp.product_id -- Check if the product exists in creditor_products
+GROUP BY 
+    s.sale_date
+ORDER BY 
+    s.sale_date DESC;
+
 ");
 ?>
 
