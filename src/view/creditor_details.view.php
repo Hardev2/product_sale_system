@@ -50,13 +50,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_paid'])) {
         // Update the status in creditor_products
         $update_status_query = $conn->prepare("
             UPDATE creditor_products SET status = 'paid'
-            WHERE creditor_id = ? AND product_id = ?
+            WHERE creditor_id = ? AND product_id = ? AND status = 'unpaid' 
         ");
 
+        // Insert and update for each product
         foreach ($product_rows as $row) {
-            $sales_query->bind_param("iid", $row['product_id'], $row['quantity'], $row['credited_price']);
-            $sales_query->execute();
+            // Check if the product has already been added to sales
+            $check_sales_query = $conn->prepare("SELECT 1 FROM sales WHERE product_id = ? AND sale_date = CURDATE()");
+            $check_sales_query->bind_param("i", $row['product_id']);
+            $check_sales_query->execute();
+            $check_sales_result = $check_sales_query->get_result();
 
+            // Only insert into sales if it hasn't already been recorded for today
+            if ($check_sales_result->num_rows == 0) {
+                // Insert the sale
+                $sales_query->bind_param("iid", $row['product_id'], $row['quantity'], $row['credited_price']);
+                $sales_query->execute();
+            }
+
+            // Update the product status to 'paid'
             $update_status_query->bind_param("ii", $creditor_id, $row['product_id']);
             $update_status_query->execute();
         }
@@ -73,18 +85,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_paid'])) {
     }
 }
 
+// Continue with fetching creditor products for history
 $creditor_products_query = "
-    SELECT c.name AS creditor_name, p.name AS product_name,cp.status, cp.quantity, (p.price + 0.25) AS credited_price, cp.credit_date
+    SELECT c.name AS creditor_name, p.name AS product_name, cp.status, cp.quantity, (p.price + 0.25) AS credited_price, cp.credit_date
     FROM creditor_products cp
     JOIN creditors c ON cp.creditor_id = c.id
     JOIN products p ON cp.product_id = p.id
-       WHERE cp.creditor_id = '$creditor_id' AND cp.status = 'paid'
+    WHERE cp.creditor_id = '$creditor_id' AND cp.status = 'paid'
     ORDER BY c.name, cp.credit_date DESC;
-
 ";
 
 $creditor_products = mysqli_query($conn, $creditor_products_query);
 ?>
+
 <?php include 'public/components/header.php' ?>
 <body>
    <div class="container">
@@ -160,7 +173,6 @@ $creditor_products = mysqli_query($conn, $creditor_products_query);
                                 <td>₱<?php echo number_format($row['credited_price'], 2); ?></td>
                                 <td><?php echo $row['status']; ?></td>
                                 <td><?php echo (new DateTime($row['credit_date']))->format('F j, Y'); ?></td>
-
                             </tr>
                         <?php endwhile; ?>
                     </tbody>
